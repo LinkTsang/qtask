@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package pb.v1;
+option go_package = "linktsang.github.com/qtask/protos/executor";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+service Executor {
+  rpc RunTask(TaskDetail) returns (stream TaskDetail);
+
+  rpc KillTask(KillTaskRequest) returns (google.protobuf.Empty);
+
+  rpc StopTask(StopTaskRequest) returns (google.protobuf.Empty);
+
+  rpc PauseTask(PauseTaskRequest) returns (google.protobuf.Empty);
+
+  rpc ResumeTask(ResumeTaskRequest) returns (google.protobuf.Empty);
+}
+
+enum TaskStatus {
+  UNKNOWN = 0;
+  READY = 1;
+  RUNNING = 2;
+  PAUSED = 3;
+  PENDING = 4;
+  CANCELED = 5;
+  COMPLETED = 6;
+  DETACHED = 7;
+  ERROR = 8;
+  NOT_EXIST = 9;
+}
+
+message TaskDetail {
+  string task_id = 1;
+
+  TaskStatus status = 2;
+
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp started_at = 4;
+  google.protobuf.Timestamp paused_at = 5;
+  google.protobuf.Timestamp terminated_at = 6;
+
+  string name = 7;
+  string description = 8;
+
+  string working_dir = 9;
+  string path = 10;
+  repeated string args = 11;
+  string output_file_path = 12;
+
+  int32 exit_code = 13;
+  string exit_message = 14;
+}
+
+message KillTaskRequest {string task_id = 1;}
+
+message StopTaskRequest {string task_id = 1;}
+
+message PauseTaskRequest {string task_id = 1;}
+
+message ResumeTaskRequest {string task_id = 1;}
