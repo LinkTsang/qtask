@@ -29,3 +29,7 @@ TODO
 ```bash
 ./scripts/proto-gen.bat
 ```
+
+# Legacy version
+
+* [qtask-legacy-python](https://github.com/LinkTsang/qtask-legacy-python)
