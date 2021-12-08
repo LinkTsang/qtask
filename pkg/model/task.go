@@ -64,7 +64,7 @@ func NewTaskDetail(path string, args ...string) *TaskDetail {
 	}
 }
 
-func TaskDetailFromProto(proto *pb.TaskDetail) *TaskDetail {
+func TaskDetailFromProto(proto *pb.RunTaskRequest) *TaskDetail {
 	var startedAt *time.Time = nil
 	var pausedAt *time.Time = nil
 	var terminatedAt *time.Time = nil

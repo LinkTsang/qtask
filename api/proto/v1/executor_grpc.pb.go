@@ -19,7 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ExecutorClient interface {
-	RunTask(ctx context.Context, in *TaskDetail, opts ...grpc.CallOption) (Executor_RunTaskClient, error)
+	RunTask(ctx context.Context, in *RunTaskRequest, opts ...grpc.CallOption) (Executor_RunTaskClient, error)
 	KillTask(ctx context.Context, in *KillTaskRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	StopTask(ctx context.Context, in *StopTaskRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	PauseTask(ctx context.Context, in *PauseTaskRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -34,7 +34,7 @@ func NewExecutorClient(cc grpc.ClientConnInterface) ExecutorClient {
 	return &executorClient{cc}
 }
 
-func (c *executorClient) RunTask(ctx context.Context, in *TaskDetail, opts ...grpc.CallOption) (Executor_RunTaskClient, error) {
+func (c *executorClient) RunTask(ctx context.Context, in *RunTaskRequest, opts ...grpc.CallOption) (Executor_RunTaskClient, error) {
 	stream, err := c.cc.NewStream(ctx, &Executor_ServiceDesc.Streams[0], "/pb.v1.Executor/RunTask", opts...)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (c *executorClient) RunTask(ctx context.Context, in *TaskDetail, opts ...gr
 }
 
 type Executor_RunTaskClient interface {
-	Recv() (*TaskDetail, error)
+	Recv() (*RunTaskResponse, error)
 	grpc.ClientStream
 }
 
@@ -58,8 +58,8 @@ type executorRunTaskClient struct {
 	grpc.ClientStream
 }
 
-func (x *executorRunTaskClient) Recv() (*TaskDetail, error) {
-	m := new(TaskDetail)
+func (x *executorRunTaskClient) Recv() (*RunTaskResponse, error) {
+	m := new(RunTaskResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (c *executorClient) ResumeTask(ctx context.Context, in *ResumeTaskRequest, 
 // All implementations must embed UnimplementedExecutorServer
 // for forward compatibility
 type ExecutorServer interface {
-	RunTask(*TaskDetail, Executor_RunTaskServer) error
+	RunTask(*RunTaskRequest, Executor_RunTaskServer) error
 	KillTask(context.Context, *KillTaskRequest) (*emptypb.Empty, error)
 	StopTask(context.Context, *StopTaskRequest) (*emptypb.Empty, error)
 	PauseTask(context.Context, *PauseTaskRequest) (*emptypb.Empty, error)
@@ -118,7 +118,7 @@ type ExecutorServer interface {
 type UnimplementedExecutorServer struct {
 }
 
-func (UnimplementedExecutorServer) RunTask(*TaskDetail, Executor_RunTaskServer) error {
+func (UnimplementedExecutorServer) RunTask(*RunTaskRequest, Executor_RunTaskServer) error {
 	return status.Errorf(codes.Unimplemented, "method RunTask not implemented")
 }
 func (UnimplementedExecutorServer) KillTask(context.Context, *KillTaskRequest) (*emptypb.Empty, error) {
@@ -147,7 +147,7 @@ func RegisterExecutorServer(s grpc.ServiceRegistrar, srv ExecutorServer) {
 }
 
 func _Executor_RunTask_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(TaskDetail)
+	m := new(RunTaskRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ func _Executor_RunTask_Handler(srv interface{}, stream grpc.ServerStream) error 
 }
 
 type Executor_RunTaskServer interface {
-	Send(*TaskDetail) error
+	Send(*RunTaskResponse) error
 	grpc.ServerStream
 }
 
@@ -163,7 +163,7 @@ type executorRunTaskServer struct {
 	grpc.ServerStream
 }
 
-func (x *executorRunTaskServer) Send(m *TaskDetail) error {
+func (x *executorRunTaskServer) Send(m *RunTaskResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 

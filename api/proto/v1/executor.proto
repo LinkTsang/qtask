@@ -7,7 +7,7 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 
 service Executor {
-  rpc RunTask(TaskDetail) returns (stream TaskDetail);
+  rpc RunTask(RunTaskRequest) returns (stream RunTaskResponse);
 
   rpc KillTask(KillTaskRequest) returns (google.protobuf.Empty);
 
@@ -31,7 +31,7 @@ enum TaskStatus {
   NOT_EXIST = 9;
 }
 
-message TaskDetail {
+message RunTaskRequest {
   string task_id = 1;
 
   TaskStatus status = 2;
@@ -51,6 +51,13 @@ message TaskDetail {
 
   int32 exit_code = 13;
   string exit_message = 14;
+}
+
+message RunTaskResponse {
+  string task_id = 1;
+  TaskStatus status = 2;
+  int32 exit_code = 3;
+  string exit_message = 4;
 }
 
 message KillTaskRequest {string task_id = 1;}

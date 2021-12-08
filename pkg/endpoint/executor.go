@@ -48,7 +48,7 @@ func makeHealthEndpoint(s service.ExecutorService) endpoint.Endpoint {
 
 func makeRunTask(s service.ExecutorService) endpoint.Endpoint {
 	return func(context context.Context, request interface{}) (interface{}, error) {
-		proto := request.(*pb.TaskDetail)
+		proto := request.(*pb.RunTaskRequest)
 		taskDetail := model.TaskDetailFromProto(proto)
 		taskDetailUpdated := make(chan model.TaskDetail)
 		err := s.RunTask(context, taskDetail, taskDetailUpdated)

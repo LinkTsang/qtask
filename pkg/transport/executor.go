@@ -46,7 +46,7 @@ func decodeNullableProtoTime(pb *timestamppb.Timestamp) *time.Time {
 }
 
 func decodeGRPCRunTaskRequest(_ context.Context, grpcRequest interface{}) (request interface{}, err error) {
-	pbTaskDetail := grpcRequest.(*pb.TaskDetail)
+	pbTaskDetail := grpcRequest.(*pb.RunTaskRequest)
 	if pbTaskDetail.CreatedAt == nil {
 		return nil, status.Errorf(codes.Internal, "CreatedAt is nil")
 	}
@@ -82,42 +82,32 @@ func encodeNullableTime(t *time.Time) *timestamppb.Timestamp {
 
 func encodeGRPCRunTaskResponse(ctx context.Context, response interface{}) (grpcResponse interface{}, err error) {
 	res := response.(*struct{ taskDetailUpdated chan *model.TaskDetail })
-	grpcTaskDetailUpdated := make(chan *pb.TaskDetail)
+	grpcTaskDetailUpdated := make(chan *pb.RunTaskResponse)
 
 	go func() {
 		for t := range res.taskDetailUpdated {
-			grpcTaskDetailUpdated <- &pb.TaskDetail{
-				TaskId:         string(t.Id),
-				Status:         pb.TaskStatus(pb.TaskStatus_value[string(t.Status)]),
-				CreatedAt:      encodeTime(t.CreatedAt),
-				StartedAt:      encodeNullableTime(t.StartedAt),
-				PausedAt:       encodeNullableTime(t.PausedAt),
-				TerminatedAt:   encodeNullableTime(t.TerminatedAt),
-				Name:           t.Name,
-				Description:    t.Description,
-				WorkingDir:     t.WorkingDir,
-				Path:           t.Path,
-				Args:           t.Args,
-				OutputFilePath: t.OutputFilePath,
-				ExitCode:       t.ExitCode,
-				ExitMessage:    t.ExitMessage,
+			grpcTaskDetailUpdated <- &pb.RunTaskResponse{
+				TaskId:      string(t.Id),
+				Status:      pb.TaskStatus(pb.TaskStatus_value[string(t.Status)]),
+				ExitCode:    t.ExitCode,
+				ExitMessage: t.ExitMessage,
 			}
 		}
 	}()
-	return struct{ taskDetailUpdated chan *pb.TaskDetail }{taskDetailUpdated: grpcTaskDetailUpdated}, nil
+	return struct{ taskDetailUpdated chan *pb.RunTaskResponse }{taskDetailUpdated: grpcTaskDetailUpdated}, nil
 }
 
 func (s *executorServer) Check(context.Context, *grpc_health_v1.HealthCheckRequest) (*grpc_health_v1.HealthCheckResponse, error) {
 	return &grpc_health_v1.HealthCheckResponse{Status: grpc_health_v1.HealthCheckResponse_SERVING}, nil
 }
 
-func (s *executorServer) RunTask(taskDetail *pb.TaskDetail, stream pb.Executor_RunTaskServer) error {
+func (s *executorServer) RunTask(taskDetail *pb.RunTaskRequest, stream pb.Executor_RunTaskServer) error {
 	ctx := stream.Context()
 	_, response, err := s.runTask.ServeGRPC(ctx, taskDetail)
 	if err != nil {
 		return status.Errorf(codes.Internal, err.Error())
 	}
-	res := response.(*struct{ taskDetailUpdated chan *pb.TaskDetail })
+	res := response.(*struct{ taskDetailUpdated chan *pb.RunTaskResponse })
 	for taskDetailUpdated := range res.taskDetailUpdated {
 		err := stream.Send(taskDetailUpdated)
 		if err != nil {
