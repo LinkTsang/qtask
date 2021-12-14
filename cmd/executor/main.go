@@ -35,7 +35,7 @@ func main() {
 	args := new(Args)
 	flag.StringVar(&args.consulHost, "consul.host", "", "The host address of Consul")
 	flag.StringVar(&args.consulPort, "consul.port", "8500", "The port of Consul")
-	flag.StringVar(&args.grpcHost, "grpc.address", "localhost", "The gRPC server address")
+	flag.StringVar(&args.grpcHost, "grpc.host", "localhost", "The gRPC server address")
 	flag.StringVar(&args.grpcPort, "grpc.port", "50051", "The gRPC server port")
 	flag.BoolVar(&args.grpcTls, "grpc.tls", false, "The gRPC server connection uses TLS if true, else plain TCP")
 	flag.StringVar(&args.grpcCertFile, "grpc.cert_file", "", "The gRPC server TLS cert file")
