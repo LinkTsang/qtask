@@ -23,13 +23,13 @@ type (
 func MakeServerEndpoints(s service.ExecutorService, logger log.Logger) Endpoints {
 	var healthEndpoint endpoint.Endpoint
 	{
-		healthEndpoint = makeHealthEndpoint(s)
+		healthEndpoint = MakeHealthEndpoint(s)
 		healthEndpoint = LoggingMiddleware(log.With(logger, "method", "Health"))(healthEndpoint)
 	}
 
 	var runTaskEndpoint endpoint.Endpoint
 	{
-		runTaskEndpoint = makeRunTask(s)
+		runTaskEndpoint = MakeRunTask(s)
 		runTaskEndpoint = LoggingMiddleware(log.With(logger, "method", "RunTask"))(runTaskEndpoint)
 	}
 
@@ -39,14 +39,14 @@ func MakeServerEndpoints(s service.ExecutorService, logger log.Logger) Endpoints
 	}
 }
 
-func makeHealthEndpoint(s service.ExecutorService) endpoint.Endpoint {
+func MakeHealthEndpoint(s service.ExecutorService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		healthy := s.Health()
 		return HealthResponse{Healthy: healthy}, nil
 	}
 }
 
-func makeRunTask(s service.ExecutorService) endpoint.Endpoint {
+func MakeRunTask(s service.ExecutorService) endpoint.Endpoint {
 	return func(context context.Context, request interface{}) (interface{}, error) {
 		proto := request.(*pb.RunTaskRequest)
 		taskDetail := model.TaskDetailFromProto(proto)
