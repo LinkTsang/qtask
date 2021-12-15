@@ -15,7 +15,7 @@ type (
 		RunTaskEndpoint endpoint.Endpoint
 	}
 
-	HealthResponse struct {
+	HealthCheckResponse struct {
 		Healthy bool
 	}
 )
@@ -42,7 +42,7 @@ func MakeServerEndpoints(s service.ExecutorService, logger log.Logger) Endpoints
 func MakeHealthEndpoint(s service.ExecutorService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		healthy := s.Health(ctx)
-		return HealthResponse{Healthy: healthy}, nil
+		return HealthCheckResponse{Healthy: healthy}, nil
 	}
 }
 
