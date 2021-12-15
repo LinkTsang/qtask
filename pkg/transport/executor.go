@@ -15,7 +15,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	pb "qtask/api/proto/v1"
 
-	"qtask/pkg/endpoint"
+	qtaskEndpoint "qtask/pkg/endpoint"
 	"qtask/pkg/model"
 )
 
@@ -25,7 +25,7 @@ type executorServer struct {
 	runTask grpctransport.Handler
 }
 
-func NewGRPCServer(endpoints endpoint.Endpoints, logger log.Logger) pb.ExecutorServer {
+func NewGRPCServer(endpoints qtaskEndpoint.Endpoints, logger log.Logger) pb.ExecutorServer {
 	options := []grpctransport.ServerOption{
 		grpctransport.ServerErrorHandler(transport.NewLogErrorHandler(logger)),
 	}
