@@ -21,7 +21,7 @@ func NewExecutorService() ExecutorService {
 	return &executorService{}
 }
 
-func (s *executorService) Health() bool {
+func (s *executorService) Health(ctx context.Context) bool {
 	return true
 }
 

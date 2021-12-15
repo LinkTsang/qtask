@@ -1,5 +1,7 @@
 package service
 
+import "context"
+
 type Service interface {
-	Health() bool
+	Health(ctx context.Context) bool
 }

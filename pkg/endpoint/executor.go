@@ -41,7 +41,7 @@ func MakeServerEndpoints(s service.ExecutorService, logger log.Logger) Endpoints
 
 func MakeHealthEndpoint(s service.ExecutorService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		healthy := s.Health()
+		healthy := s.Health(ctx)
 		return HealthResponse{Healthy: healthy}, nil
 	}
 }
