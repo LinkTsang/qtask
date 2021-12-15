@@ -11,6 +11,8 @@ import (
 	"github.com/go-kit/kit/sd"
 	consulsd "github.com/go-kit/kit/sd/consul"
 	"github.com/hashicorp/consul/api"
+
+	"qtask/pkg/constant"
 )
 
 func ConsulRegister(
@@ -45,8 +47,8 @@ func ConsulRegister(
 	port, _ := strconv.Atoi(advertisePort)
 	num := rand.Intn(100) // to make service ID unique
 	asr := api.AgentServiceRegistration{
-		ID:      fmt.Sprintf("qtask-srv-%v-%v", serviceName, strconv.Itoa(num)), //unique service ID
-		Name:    fmt.Sprintf("qtask-srv-%v", serviceName),
+		ID:      fmt.Sprintf("%v-%v-%v", constant.QTaskSrvPrefix, serviceName, strconv.Itoa(num)), //unique service ID
+		Name:    fmt.Sprintf("%v-%v", constant.QTaskSrvPrefix, serviceName),
 		Address: advertiseAddress,
 		Port:    port,
 		Tags:    []string{serviceName},
