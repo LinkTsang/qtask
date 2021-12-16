@@ -21,8 +21,8 @@ func NewExecutorService() ExecutorService {
 	return &executorService{}
 }
 
-func (s *executorService) Health(ctx context.Context) bool {
-	return true
+func (s *executorService) Health(ctx context.Context) (bool, error) {
+	return true, nil
 }
 
 func (s *executorService) RunTask(ctx context.Context, taskDetail *model.TaskDetail, taskDetailUpdated chan model.TaskDetail) error {
