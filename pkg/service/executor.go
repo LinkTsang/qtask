@@ -8,10 +8,10 @@ import (
 type ExecutorService interface {
 	Service
 	RunTask(ctx context.Context, taskDetail *model.TaskDetail, taskDetailUpdated chan model.TaskDetail) error
-	KillTask(id model.TaskId) error
-	StopTask(id model.TaskId) error
-	PauseTask(id model.TaskId) error
-	ResumeTask(id model.TaskId) error
+	KillTask(ctx context.Context, id model.TaskId) error
+	StopTask(ctx context.Context, id model.TaskId) error
+	PauseTask(ctx context.Context, id model.TaskId) error
+	ResumeTask(ctx context.Context, id model.TaskId) error
 }
 
 type executorService struct {
@@ -29,18 +29,18 @@ func (s *executorService) RunTask(ctx context.Context, taskDetail *model.TaskDet
 	panic("implement me")
 }
 
-func (s *executorService) KillTask(id model.TaskId) error {
+func (s *executorService) KillTask(ctx context.Context, id model.TaskId) error {
 	panic("implement me")
 }
 
-func (s *executorService) StopTask(id model.TaskId) error {
+func (s *executorService) StopTask(ctx context.Context, id model.TaskId) error {
 	panic("implement me")
 }
 
-func (s *executorService) PauseTask(id model.TaskId) error {
+func (s *executorService) PauseTask(ctx context.Context, id model.TaskId) error {
 	panic("implement me")
 }
 
-func (s *executorService) ResumeTask(id model.TaskId) error {
+func (s *executorService) ResumeTask(ctx context.Context, id model.TaskId) error {
 	panic("implement me")
 }
