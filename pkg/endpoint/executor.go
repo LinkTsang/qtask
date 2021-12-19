@@ -13,22 +13,11 @@ import (
 
 type (
 	Endpoints struct {
-		HealthEndpoint  endpoint.Endpoint
 		RunTaskEndpoint endpoint.Endpoint
-	}
-
-	HealthCheckResponse struct {
-		Healthy bool
 	}
 )
 
 func MakeServerEndpoints(s service.ExecutorService, logger log.Logger) Endpoints {
-	var healthEndpoint endpoint.Endpoint
-	{
-		healthEndpoint = MakeHealthEndpoint(s)
-		healthEndpoint = LoggingMiddleware(log.With(logger, "method", "Health"))(healthEndpoint)
-	}
-
 	var runTaskEndpoint endpoint.Endpoint
 	{
 		runTaskEndpoint = MakeRunTask(s)
@@ -36,18 +25,7 @@ func MakeServerEndpoints(s service.ExecutorService, logger log.Logger) Endpoints
 	}
 
 	return Endpoints{
-		HealthEndpoint:  healthEndpoint,
 		RunTaskEndpoint: runTaskEndpoint,
-	}
-}
-
-func MakeHealthEndpoint(s service.ExecutorService) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		healthy, err := s.Health(ctx)
-		if err != nil {
-			return false, err
-		}
-		return HealthCheckResponse{Healthy: healthy}, nil
 	}
 }
 
@@ -59,15 +37,6 @@ func MakeRunTask(s service.ExecutorService) endpoint.Endpoint {
 		err := s.RunTask(context, taskDetail, taskDetailUpdated)
 		return nil, err
 	}
-}
-
-func (e *Endpoints) Health(ctx context.Context) (bool, error) {
-	resp, err := e.HealthEndpoint(ctx, nil)
-	if err != nil {
-		return false, err
-	}
-	response := resp.(HealthCheckResponse)
-	return response.Healthy, nil
 }
 
 func (e *Endpoints) RunTask(ctx context.Context, taskDetail *model.TaskDetail, taskDetailUpdated chan model.TaskDetail) error {
