@@ -38,7 +38,7 @@ func ConsulRegister(
 	}
 
 	check := api.AgentServiceCheck{
-		GRPC:     fmt.Sprintf("%v:%v/%v", advertiseAddress, advertisePort, serviceName),
+		GRPC:     fmt.Sprintf("%v:%v", advertiseAddress, advertisePort),
 		Interval: "10s",
 		Timeout:  "1s",
 		Notes:    "Basic health checks",
