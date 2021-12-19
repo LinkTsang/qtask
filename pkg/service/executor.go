@@ -5,9 +5,19 @@ import (
 	"qtask/pkg/model"
 )
 
+type TaskMonitor struct {
+	ch chan struct {
+		taskId  model.TaskId
+		status  model.TaskStatus
+		message string
+	}
+	err chan error
+}
+
 type ExecutorService interface {
 	Service
 	RunTask(ctx context.Context, taskDetail *model.TaskDetail, taskDetailUpdated chan model.TaskDetail) error
+	WatchTasks(ctx context.Context) (TaskMonitor, error)
 	KillTask(ctx context.Context, id model.TaskId) error
 	StopTask(ctx context.Context, id model.TaskId) error
 	PauseTask(ctx context.Context, id model.TaskId) error
@@ -26,6 +36,10 @@ func (s *executorService) Health(ctx context.Context) (bool, error) {
 }
 
 func (s *executorService) RunTask(ctx context.Context, taskDetail *model.TaskDetail, taskDetailUpdated chan model.TaskDetail) error {
+	panic("implement me")
+}
+
+func (s *executorService) WatchTasks(ctx context.Context) (TaskMonitor, error) {
 	panic("implement me")
 }
 
