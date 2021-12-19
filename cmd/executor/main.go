@@ -12,6 +12,8 @@ import (
 	"github.com/oklog/run"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
 	pb "qtask/api/proto/v1"
 	"qtask/data"
@@ -63,9 +65,12 @@ func setupLogger() log.Logger {
 
 // setup gRPC server and service discovering
 func setupExecutorServer(g *run.Group, logger log.Logger, args *Args) {
+	healthCheck := health.NewServer()
+
 	executorService := service.NewExecutorService()
 	endpoints := endpoint.MakeServerEndpoints(executorService, logger)
 	grpcServer := transport.NewGRPCServer(endpoints, logger)
+
 	register := sd.ConsulRegister(
 		args.consulHost, args.consulPort,
 		args.grpcHost, args.grpcPort,
@@ -94,6 +99,7 @@ func setupExecutorServer(g *run.Group, logger log.Logger, args *Args) {
 			opts = []grpc.ServerOption{grpc.Creds(tlsCredentials)}
 		}
 		grpcBaseServer := grpc.NewServer(opts...)
+		healthpb.RegisterHealthServer(grpcBaseServer, healthCheck)
 		pb.RegisterExecutorServer(grpcBaseServer, grpcServer)
 		register.Register()
 		return grpcBaseServer.Serve(listener)
