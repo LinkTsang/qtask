@@ -4,19 +4,22 @@ import (
 	"context"
 	"time"
 
+	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/transport"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	pb "qtask/api/proto/v1"
 
+	pb "qtask/api/proto/v1"
 	qtaskEndpoint "qtask/pkg/endpoint"
 	"qtask/pkg/model"
+	"qtask/pkg/service"
 )
 
 type executorServer struct {
@@ -129,4 +132,83 @@ func (executorServer) PauseTask(context.Context, *pb.PauseTaskRequest) (*emptypb
 }
 func (executorServer) ResumeTask(context.Context, *pb.ResumeTaskRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResumeTask not implemented")
+}
+
+func NewGRPCClient(conn *grpc.ClientConn, options []grpctransport.ClientOption) (service.ExecutorService, error) {
+	serviceName := pb.Executor_ServiceDesc.ServiceName
+
+	var healthEndpoint endpoint.Endpoint
+	{
+		healthEndpoint = grpctransport.NewClient(
+			conn,
+			serviceName,
+			"health",
+			encodeGRPCHealthCheckRequest,
+			decodeGRPCHealthCheckResponse,
+			grpc_health_v1.HealthCheckResponse{}, options...).Endpoint()
+	}
+
+	var runTaskEndpoint endpoint.Endpoint
+	{
+		runTaskEndpoint = grpctransport.NewClient(
+			conn,
+			serviceName,
+			"runTask",
+			encodeGRPCRunTaskRequest,
+			decodeGRPCRunTaskResponse,
+			pb.RunTaskResponse{}, options...).Endpoint()
+	}
+
+	return &qtaskEndpoint.Endpoints{
+		HealthEndpoint:  healthEndpoint,
+		RunTaskEndpoint: runTaskEndpoint,
+	}, nil
+}
+
+func encodeGRPCHealthCheckRequest(_ context.Context, _ interface{}) (grpcRequest interface{}, err error) {
+	return nil, nil
+}
+
+func decodeGRPCHealthCheckResponse(_ context.Context, grpcReply interface{}) (interface{}, error) {
+	reply := grpcReply.(*grpc_health_v1.HealthCheckResponse)
+	return qtaskEndpoint.HealthCheckResponse{
+		Healthy: reply.Status == grpc_health_v1.HealthCheckResponse_SERVING,
+	}, nil
+}
+
+func encodeGRPCRunTaskRequest(_ context.Context, request interface{}) (interface{}, error) {
+	req := request.(*model.TaskDetail)
+	return &pb.RunTaskRequest{
+		TaskId:         string(req.Id),
+		Status:         pb.TaskStatus(pb.TaskStatus_value[string(req.Status)]),
+		CreatedAt:      encodeTime(req.CreatedAt),
+		StartedAt:      encodeNullableTime(req.StartedAt),
+		PausedAt:       encodeNullableTime(req.PausedAt),
+		TerminatedAt:   encodeNullableTime(req.TerminatedAt),
+		Name:           req.Name,
+		Description:    req.Description,
+		WorkingDir:     req.WorkingDir,
+		Path:           req.Path,
+		Args:           req.Args,
+		OutputFilePath: req.OutputFilePath,
+		ExitCode:       req.ExitCode,
+		ExitMessage:    req.ExitMessage,
+	}, nil
+}
+
+type RunTaskResponse struct {
+	taskId      model.TaskId
+	Status      model.TaskStatus
+	ExitCode    int32
+	ExitMessage string
+}
+
+func decodeGRPCRunTaskResponse(_ context.Context, grpcReply interface{}) (interface{}, error) {
+	reply := grpcReply.(*pb.RunTaskResponse)
+	return RunTaskResponse{
+		taskId:      model.TaskId(reply.TaskId),
+		Status:      model.TaskStatus(reply.Status.String()),
+		ExitCode:    reply.ExitCode,
+		ExitMessage: reply.ExitMessage,
+	}, nil
 }
