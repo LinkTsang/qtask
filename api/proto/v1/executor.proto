@@ -9,6 +9,8 @@ import "google/protobuf/empty.proto";
 service Executor {
   rpc RunTask(RunTaskRequest) returns (stream RunTaskResponse);
 
+  rpc WatchTasks(google.protobuf.Empty) returns (stream WatchTasksResponse);
+
   rpc KillTask(KillTaskRequest) returns (google.protobuf.Empty);
 
   rpc StopTask(StopTaskRequest) returns (google.protobuf.Empty);
@@ -54,6 +56,13 @@ message RunTaskRequest {
 }
 
 message RunTaskResponse {
+  string task_id = 1;
+  TaskStatus status = 2;
+  int32 exit_code = 3;
+  string exit_message = 4;
+}
+
+message WatchTasksResponse {
   string task_id = 1;
   TaskStatus status = 2;
   int32 exit_code = 3;
