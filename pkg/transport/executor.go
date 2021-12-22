@@ -31,9 +31,10 @@ func NewGRPCServer(endpoints qtaskEndpoint.Endpoints, logger log.Logger) pb.Exec
 		grpctransport.ServerErrorHandler(transport.NewLogErrorHandler(logger)),
 	}
 	return &executorServer{
-		runTask: grpctransport.NewServer(endpoints.RunTaskEndpoint,
+		runTask: grpctransport.NewServer(
+			endpoints.RunTaskEndpoint,
 			decodeGRPCRunTaskRequest,
-			encodeGRPCRunTaskResponse,
+			encodeGRPCEmptyResponse,
 			options...),
 	}
 }
@@ -81,37 +82,16 @@ func encodeNullableTime(t *time.Time) *timestamppb.Timestamp {
 	return nil
 }
 
-func encodeGRPCRunTaskResponse(ctx context.Context, response interface{}) (grpcResponse interface{}, err error) {
-	res := response.(*struct{ taskDetailUpdated chan *model.TaskDetail })
-	grpcTaskDetailUpdated := make(chan *pb.RunTaskResponse)
-
-	go func() {
-		for t := range res.taskDetailUpdated {
-			grpcTaskDetailUpdated <- &pb.RunTaskResponse{
-				TaskId:      string(t.Id),
-				Status:      pb.TaskStatus(pb.TaskStatus_value[string(t.Status)]),
-				ExitCode:    t.ExitCode,
-				ExitMessage: t.ExitMessage,
-			}
-		}
-	}()
-	return struct{ taskDetailUpdated chan *pb.RunTaskResponse }{taskDetailUpdated: grpcTaskDetailUpdated}, nil
+func encodeGRPCEmptyResponse(ctx context.Context, response interface{}) (interface{}, error) {
+	return &emptypb.Empty{}, nil
 }
 
-func (s *executorServer) RunTask(taskDetail *pb.RunTaskRequest, stream pb.Executor_RunTaskServer) error {
-	ctx := stream.Context()
-	_, response, err := s.runTask.ServeGRPC(ctx, taskDetail)
+func (s *executorServer) RunTask(ctx context.Context, taskDetail *pb.RunTaskRequest) (*emptypb.Empty, error) {
+	_, _, err := s.runTask.ServeGRPC(ctx, taskDetail)
 	if err != nil {
-		return status.Errorf(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-	res := response.(*struct{ taskDetailUpdated chan *pb.RunTaskResponse })
-	for taskDetailUpdated := range res.taskDetailUpdated {
-		err := stream.Send(taskDetailUpdated)
-		if err != nil {
-			return status.Errorf(codes.Internal, err.Error())
-		}
-	}
-	return nil
+	return &emptypb.Empty{}, nil
 }
 
 func (executorServer) KillTask(context.Context, *pb.KillTaskRequest) (*emptypb.Empty, error) {
@@ -138,8 +118,8 @@ func NewGRPCClient(conn *grpc.ClientConn, options []grpctransport.ClientOption) 
 			serviceName,
 			"runTask",
 			encodeGRPCRunTaskRequest,
-			decodeGRPCRunTaskResponse,
-			pb.RunTaskResponse{}, options...).Endpoint()
+			decodeGRPCEmptyResponse,
+			emptypb.Empty{}, options...).Endpoint()
 	}
 
 	return &qtaskEndpoint.Endpoints{
@@ -174,12 +154,6 @@ type RunTaskResponse struct {
 	ExitMessage string
 }
 
-func decodeGRPCRunTaskResponse(_ context.Context, grpcReply interface{}) (interface{}, error) {
-	reply := grpcReply.(*pb.RunTaskResponse)
-	return RunTaskResponse{
-		taskId:      model.TaskId(reply.TaskId),
-		Status:      model.TaskStatus(reply.Status.String()),
-		ExitCode:    reply.ExitCode,
-		ExitMessage: reply.ExitMessage,
-	}, nil
+func decodeGRPCEmptyResponse(_ context.Context, grpcReply interface{}) (interface{}, error) {
+	return nil, nil
 }

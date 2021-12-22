@@ -19,7 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ExecutorClient interface {
-	RunTask(ctx context.Context, in *RunTaskRequest, opts ...grpc.CallOption) (Executor_RunTaskClient, error)
+	RunTask(ctx context.Context, in *RunTaskRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	WatchTasks(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (Executor_WatchTasksClient, error)
 	KillTask(ctx context.Context, in *KillTaskRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	StopTask(ctx context.Context, in *StopTaskRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -35,40 +35,17 @@ func NewExecutorClient(cc grpc.ClientConnInterface) ExecutorClient {
 	return &executorClient{cc}
 }
 
-func (c *executorClient) RunTask(ctx context.Context, in *RunTaskRequest, opts ...grpc.CallOption) (Executor_RunTaskClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Executor_ServiceDesc.Streams[0], "/pb.v1.Executor/RunTask", opts...)
+func (c *executorClient) RunTask(ctx context.Context, in *RunTaskRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/pb.v1.Executor/RunTask", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &executorRunTaskClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type Executor_RunTaskClient interface {
-	Recv() (*RunTaskResponse, error)
-	grpc.ClientStream
-}
-
-type executorRunTaskClient struct {
-	grpc.ClientStream
-}
-
-func (x *executorRunTaskClient) Recv() (*RunTaskResponse, error) {
-	m := new(RunTaskResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
+	return out, nil
 }
 
 func (c *executorClient) WatchTasks(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (Executor_WatchTasksClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Executor_ServiceDesc.Streams[1], "/pb.v1.Executor/WatchTasks", opts...)
+	stream, err := c.cc.NewStream(ctx, &Executor_ServiceDesc.Streams[0], "/pb.v1.Executor/WatchTasks", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +116,7 @@ func (c *executorClient) ResumeTask(ctx context.Context, in *ResumeTaskRequest, 
 // All implementations must embed UnimplementedExecutorServer
 // for forward compatibility
 type ExecutorServer interface {
-	RunTask(*RunTaskRequest, Executor_RunTaskServer) error
+	RunTask(context.Context, *RunTaskRequest) (*emptypb.Empty, error)
 	WatchTasks(*emptypb.Empty, Executor_WatchTasksServer) error
 	KillTask(context.Context, *KillTaskRequest) (*emptypb.Empty, error)
 	StopTask(context.Context, *StopTaskRequest) (*emptypb.Empty, error)
@@ -152,8 +129,8 @@ type ExecutorServer interface {
 type UnimplementedExecutorServer struct {
 }
 
-func (UnimplementedExecutorServer) RunTask(*RunTaskRequest, Executor_RunTaskServer) error {
-	return status.Errorf(codes.Unimplemented, "method RunTask not implemented")
+func (UnimplementedExecutorServer) RunTask(context.Context, *RunTaskRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RunTask not implemented")
 }
 func (UnimplementedExecutorServer) WatchTasks(*emptypb.Empty, Executor_WatchTasksServer) error {
 	return status.Errorf(codes.Unimplemented, "method WatchTasks not implemented")
@@ -183,25 +160,22 @@ func RegisterExecutorServer(s grpc.ServiceRegistrar, srv ExecutorServer) {
 	s.RegisterService(&Executor_ServiceDesc, srv)
 }
 
-func _Executor_RunTask_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(RunTaskRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+func _Executor_RunTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RunTaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
 	}
-	return srv.(ExecutorServer).RunTask(m, &executorRunTaskServer{stream})
-}
-
-type Executor_RunTaskServer interface {
-	Send(*RunTaskResponse) error
-	grpc.ServerStream
-}
-
-type executorRunTaskServer struct {
-	grpc.ServerStream
-}
-
-func (x *executorRunTaskServer) Send(m *RunTaskResponse) error {
-	return x.ServerStream.SendMsg(m)
+	if interceptor == nil {
+		return srv.(ExecutorServer).RunTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.v1.Executor/RunTask",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExecutorServer).RunTask(ctx, req.(*RunTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Executor_WatchTasks_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -305,6 +279,10 @@ var Executor_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ExecutorServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "RunTask",
+			Handler:    _Executor_RunTask_Handler,
+		},
+		{
 			MethodName: "KillTask",
 			Handler:    _Executor_KillTask_Handler,
 		},
@@ -322,11 +300,6 @@ var Executor_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "RunTask",
-			Handler:       _Executor_RunTask_Handler,
-			ServerStreams: true,
-		},
 		{
 			StreamName:    "WatchTasks",
 			Handler:       _Executor_WatchTasks_Handler,

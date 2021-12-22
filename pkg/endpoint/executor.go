@@ -33,13 +33,12 @@ func MakeRunTask(s service.ExecutorService) endpoint.Endpoint {
 	return func(context context.Context, request interface{}) (interface{}, error) {
 		proto := request.(*pb.RunTaskRequest)
 		taskDetail := model.TaskDetailFromProto(proto)
-		taskDetailUpdated := make(chan model.TaskDetail)
-		err := s.RunTask(context, taskDetail, taskDetailUpdated)
+		err := s.RunTask(context, taskDetail)
 		return nil, err
 	}
 }
 
-func (e *Endpoints) RunTask(ctx context.Context, taskDetail *model.TaskDetail, taskDetailUpdated chan model.TaskDetail) error {
+func (e *Endpoints) RunTask(ctx context.Context, taskDetail *model.TaskDetail) error {
 	panic("implement me")
 }
 

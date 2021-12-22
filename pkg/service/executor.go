@@ -15,7 +15,7 @@ type TaskMonitor struct {
 }
 
 type ExecutorService interface {
-	RunTask(ctx context.Context, taskDetail *model.TaskDetail, taskDetailUpdated chan model.TaskDetail) error
+	RunTask(ctx context.Context, taskDetail *model.TaskDetail) error
 	WatchTasks(ctx context.Context) (TaskMonitor, error)
 	KillTask(ctx context.Context, id model.TaskId) error
 	StopTask(ctx context.Context, id model.TaskId) error
@@ -30,7 +30,7 @@ func NewExecutorService() ExecutorService {
 	return &executorService{}
 }
 
-func (s *executorService) RunTask(ctx context.Context, taskDetail *model.TaskDetail, taskDetailUpdated chan model.TaskDetail) error {
+func (s *executorService) RunTask(ctx context.Context, taskDetail *model.TaskDetail) error {
 	panic("implement me")
 }
 
